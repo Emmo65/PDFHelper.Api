@@ -1,9 +1,0 @@
-bin/
-obj/
-.vs/
-publish/
-*.user
-*.suo
-*.pfx
-*.p12
-appsettings.*.secrets.json
