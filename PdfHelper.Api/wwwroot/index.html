@@ -2,220 +2,259 @@
 <html lang="de" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PDF Helper</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
+  <!-- Topbar -->
+  <div class="topbar">
     <div class="brand">
-      <!-- Animiertes Logo -->
-      <svg class="logo" viewBox="0 0 120 120" width="48" height="48" aria-hidden="true">
-  <defs>
-    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6ae2ff"/>
-      <stop offset="50%" stop-color="#8f7aff"/>
-      <stop offset="100%" stop-color="#00ffa3"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  <!-- Wichtig: fill='none', damit kein schwarzer Vollkreis erscheint -->
-  <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="10"/>
-  <g class="spinner" filter="url(#glow)">
-    <path d="M60 12 A48 48 0 0 1 108 60" stroke="url(#g1)" stroke-width="10" fill="none" stroke-linecap="round"/>
-  </g>
-</svg>
-
+      <svg class="logo" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring" cx="60" cy="60" r="48"/>
+        <path class="spinner" d="M60 12 A48 48 0 0 1 108 60" stroke="url(#g)" stroke-width="10" fill="none" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#6ae2ff"/><stop offset="100%" stop-color="#8f7aff"/>
+          </linearGradient>
+        </defs>
+      </svg>
       <h1>PDF Helper</h1>
     </div>
+    <button id="themeBtn" class="btn ghost" type="button">🌗 Theme</button>
+  </div>
 
-    <button id="themeToggle" class="btn ghost" aria-label="Theme umschalten">🌗</button>
-  </header>
-
-  <main class="wrap">
+  <div class="wrap">
     <div class="grid">
-
-      <!-- MERGE -->
-      <section class="card" data-op="merge">
+      <!-- Merge -->
+      <section class="card">
         <div class="badge">Merge</div>
         <h2>PDFs zusammenführen</h2>
-        <div class="row">
-          <div class="dropzone" data-target="mergeFiles">
-            <span>PDFs hierher ziehen<br><small>oder klicken, um Dateien zu wählen</small></span>
+        <div class="row" style="flex-wrap:nowrap; gap:16px;">
+          <label class="dropzone" id="dz-merge" style="flex:1">
             <input type="file" id="mergeFiles" multiple accept="application/pdf">
-          </div>
+            <span></span>
+          </label>
           <button class="btn primary" onclick="merge()">Zusammenführen</button>
         </div>
-        <p class="muted">Mindestens 2 PDFs auswählen.</p>
+        <p class="muted">Mindestens 2 PDFs auswählen. Ergebnis: <code>merged.pdf</code></p>
       </section>
 
-      <!-- SPLIT -->
-      <section class="card" data-op="split">
+      <!-- Split -->
+      <section class="card">
         <div class="badge">Split</div>
         <h2>PDF aufteilen</h2>
-        <div class="row">
-          <div class="dropzone" data-target="splitFile">
-            <span>PDF hierher ziehen<br><small>oder klicken</small></span>
+        <div class="row" style="flex-wrap:wrap; gap:12px;">
+          <label class="dropzone" id="dz-split" style="flex:1; min-width:320px">
             <input type="file" id="splitFile" accept="application/pdf">
-          </div>
-          <input type="text" id="splitRanges" class="input" placeholder="z. B. 1-3,5,8-end">
+            <span></span>
+          </label>
+          <input class="input" id="splitRanges" placeholder="Bereiche z. B. 1-3,5,8-end">
           <button class="btn primary" onclick="split()">Aufteilen</button>
         </div>
-        <p class="muted">Bereiche kommasepariert. <code>end</code> = letzte Seite.</p>
+        <p class="muted">Ergebnis: ZIP mit Teil-PDFs (<code>parts.zip</code>)</p>
       </section>
 
-      <!-- ROTATE -->
-      <section class="card" data-op="rotate">
+      <!-- Rotate -->
+      <section class="card">
         <div class="badge">Rotate</div>
         <h2>Seiten drehen</h2>
-        <div class="row">
-          <div class="dropzone" data-target="rotFile">
-            <span>PDF hierher ziehen<br><small>oder klicken</small></span>
+        <div class="row" style="flex-wrap:wrap; gap:12px;">
+          <label class="dropzone" id="dz-rot" style="flex:1; min-width:320px">
             <input type="file" id="rotFile" accept="application/pdf">
-          </div>
-          <input type="text" id="rotPages" class="input" placeholder="z. B. 2,4-5">
-          <select id="rotAngle" class="input">
+            <span></span>
+          </label>
+          <input class="input" id="rotPages" placeholder="Seiten z. B. 2,4-5">
+          <select class="input" id="rotAngle">
             <option value="90">90°</option>
             <option value="180">180°</option>
             <option value="270">270°</option>
           </select>
           <button class="btn primary" onclick="rotate()">Drehen</button>
         </div>
+        <p class="muted">Ergebnis: <code>rotated.pdf</code></p>
       </section>
 
-      <!-- COMPRESS -->
-      <section class="card" data-op="compress">
+      <!-- Compress -->
+      <section class="card">
         <div class="badge">Compress</div>
         <h2>PDF komprimieren</h2>
-        <div class="row">
-          <div class="dropzone" data-target="cmpFile">
-            <span>PDF hierher ziehen<br><small>oder klicken</small></span>
+        <div class="row" style="flex-wrap:wrap; gap:12px;">
+          <label class="dropzone" id="dz-cmp" style="flex:1; min-width:320px">
             <input type="file" id="cmpFile" accept="application/pdf">
-          </div>
-          <select id="cmpLevel" class="input">
+            <span></span>
+          </label>
+          <select class="input" id="cmpLevel">
             <option value="standard">standard (/ebook)</option>
             <option value="low">low (/screen)</option>
             <option value="high">high (/prepress)</option>
           </select>
           <button class="btn primary" onclick="compress()">Komprimieren</button>
         </div>
-        <p class="muted">Benötigt Ghostscript – sonst erscheint ein Hinweis.</p>
+        <p class="muted">Benötigt Ghostscript. Ergebnis: <code>compressed.pdf</code></p>
       </section>
 
+      <!-- Text ersetzen -->
+      <section class="card">
+        <div class="badge">Text</div>
+        <h2>Text ersetzen (Overlay)</h2>
+        <div class="row" style="flex-direction:column; align-items:flex-start; gap:12px;">
+          <label class="dropzone" id="dz-rep" style="width:100%; max-width:480px">
+            <input type="file" id="repFile" accept="application/pdf">
+            <span></span>
+          </label>
+          <div class="row">
+            <input class="input" id="repFind" placeholder="Suche (z. B. Muster)">
+            <input class="input" id="repReplace" placeholder="Ersetzen durch">
+          </div>
+          <div class="row">
+            <label><input type="checkbox" id="repCase"> Groß/Klein beachten</label>
+            <label><input type="checkbox" id="repWhole" checked> Ganzes Wort</label>
+            <button class="btn primary" onclick="replaceText()">Ersetzen</button>
+          </div>
+        </div>
+        <p class="muted">Ergebnis: <code>text-replaced.pdf</code></p>
+      </section>
+
+      <!-- Text schwärzen -->
+      <section class="card">
+        <div class="badge">Redact</div>
+        <h2>Text schwärzen</h2>
+        <div class="row" style="flex-direction:column; align-items:flex-start; gap:12px;">
+          <label class="dropzone" id="dz-red" style="width:100%; max-width:480px">
+            <input type="file" id="redFile" accept="application/pdf">
+            <span></span>
+          </label>
+          <div class="row">
+            <input class="input" id="redFind" placeholder="Suche (z. B. IBAN)">
+          </div>
+          <div class="row">
+            <label><input type="checkbox" id="redCase"> Groß/Klein beachten</label>
+            <label><input type="checkbox" id="redWhole" checked> Ganzes Wort</label>
+            <button class="btn primary" onclick="redactText()">Schwärzen</button>
+          </div>
+        </div>
+        <p class="muted">Ergebnis: <code>text-redacted.pdf</code></p>
+      </section>
     </div>
-  </main>
+  </div>
 
-  <div id="toast" class="toast">Download gestartet…</div>
+  <div id="toast" class="toast">Fertig.</div>
 
-<script>
-/* ---------- Theme Toggle ---------- */
-const html = document.documentElement;
-const saved = localStorage.getItem('pdfhelper-theme');
-if(saved){ html.setAttribute('data-theme', saved); }
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('pdfhelper-theme', next);
-});
-
-/* ---------- Drag & Drop ---------- */
-function wireDropzones(){
-  document.querySelectorAll('.dropzone').forEach(zone => {
-    const input = zone.querySelector('input[type="file"]');
-    const span  = zone.querySelector('span');
-
-    zone.addEventListener('click', () => input.click());
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); zone.classList.remove('drag');
-      const dt = new DataTransfer();
-      [...e.dataTransfer.files].forEach(f => dt.items.add(f));
-      input.files = dt.files;
-      span.textContent = input.multiple ? `${input.files.length} Datei(en) gewählt` : (input.files[0]?.name || '1 Datei gewählt');
+  <script>
+    // Light/Dark Toggle
+    const themeBtn = document.getElementById('themeBtn');
+    themeBtn.addEventListener('click', () => {
+      const html = document.documentElement;
+      html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
     });
-    input.addEventListener('change', () => {
-      span.textContent = input.multiple ? `${input.files.length} Datei(en) gewählt` : (input.files[0]?.name || '1 Datei gewählt');
+
+    // Toast helper
+    function showToast(msg){
+      const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2000);
+    }
+
+    async function downloadFromResponse(res, filename){
+      if(!res.ok){
+        try{ const err = await res.json(); alert(err.message || "Fehler"); }
+        catch{ alert("Fehler"); }
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      showToast('Download gestartet');
+    }
+
+    async function merge(){
+      const inp = document.getElementById('mergeFiles');
+      const fd = new FormData();
+      [...inp.files].forEach(f => fd.append('files', f));
+      const res = await fetch('/api/merge', { method:'POST', body: fd });
+      await downloadFromResponse(res, 'merged.pdf');
+    }
+
+    async function split(){
+      const file = document.getElementById('splitFile').files[0];
+      const ranges = document.getElementById('splitRanges').value;
+      const fd = new FormData(); if(file) fd.append('file', file);
+      const res = await fetch(`/api/split?ranges=${encodeURIComponent(ranges)}`, { method:'POST', body: fd });
+      await downloadFromResponse(res, 'parts.zip');
+    }
+
+    async function rotate(){
+      const file = document.getElementById('rotFile').files[0];
+      const pages = document.getElementById('rotPages').value;
+      const angle = document.getElementById('rotAngle').value;
+      const fd = new FormData(); if(file) fd.append('file', file);
+      const res = await fetch(`/api/rotate?pages=${encodeURIComponent(pages)}&angle=${encodeURIComponent(angle)}`, { method:'POST', body: fd });
+      await downloadFromResponse(res, 'rotated.pdf');
+    }
+
+    async function compress(){
+      const file = document.getElementById('cmpFile').files[0];
+      const level = document.getElementById('cmpLevel').value;
+      const fd = new FormData(); if(file) fd.append('file', file);
+      const res = await fetch(`/api/compress?level=${encodeURIComponent(level)}`, { method:'POST', body: fd });
+      await downloadFromResponse(res, 'compressed.pdf');
+    }
+
+    async function replaceText(){
+      const file = document.getElementById('repFile').files[0];
+      const find = document.getElementById('repFind').value;
+      const repl = document.getElementById('repReplace').value;
+      const matchCase = document.getElementById('repCase').checked;
+      const wholeWord = document.getElementById('repWhole').checked;
+      const fd = new FormData(); if(file) fd.append('file', file);
+      const url = `/api/text/replace?find=${encodeURIComponent(find)}&replace=${encodeURIComponent(repl)}&matchCase=${matchCase}&wholeWord=${wholeWord}`;
+      const res = await fetch(url, { method:'POST', body: fd });
+      await downloadFromResponse(res, 'text-replaced.pdf');
+    }
+
+    async function redactText(){
+      const file = document.getElementById('redFile').files[0];
+      const find = document.getElementById('redFind').value;
+      const matchCase = document.getElementById('redCase').checked;
+      const wholeWord = document.getElementById('redWhole').checked;
+      const fd = new FormData(); if(file) fd.append('file', file);
+      const url = `/api/text/redact?find=${encodeURIComponent(find)}&matchCase=${matchCase}&wholeWord=${wholeWord}`;
+      const res = await fetch(url, { method:'POST', body: fd });
+      await downloadFromResponse(res, 'text-redacted.pdf');
+    }
+
+    // ------- Drag & Drop Dropzones --------
+    function makeDropzone(dzId, inputId, placeholderMany="PDFs hierher ziehen<br><small>oder klicken, um Dateien zu wählen</small>", placeholderOne="PDF hierher ziehen<br><small>oder klicken</small>"){
+      const dz = document.getElementById(dzId);
+      const inp = document.getElementById(inputId);
+      const span = dz.querySelector('span');
+      const isMulti = inp.hasAttribute('multiple');
+
+      const setIdle = () => span.innerHTML = isMulti ? placeholderMany : placeholderOne;
+      const update = () => {
+        if (inp.files && inp.files.length) {
+          span.textContent = inp.files.length === 1 ? inp.files[0].name : `${inp.files.length} Datei(en) ausgewählt`;
+        } else setIdle();
+      };
+
+      ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+      ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+      dz.addEventListener('drop', e => { inp.files = e.dataTransfer.files; update(); });
+      inp.addEventListener('change', update);
+
+      setIdle();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      makeDropzone('dz-merge','mergeFiles');
+      makeDropzone('dz-split','splitFile');
+      makeDropzone('dz-rot','rotFile');
+      makeDropzone('dz-cmp','cmpFile');
+      makeDropzone('dz-rep','repFile');
+      makeDropzone('dz-red','redFile');
     });
-  });
-}
-wireDropzones();
-
-/* ---------- Toast ---------- */
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1800);
-}
-
-/* ---------- Download Helper ---------- */
-async function downloadFromResponse(res, filename){
-  if(!res.ok){
-    try{
-      const err = await res.json();
-      alert(err.message || "Fehler");
-    }catch{ alert("Fehler"); }
-    return;
-  }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-  showToast('Download gestartet: ' + filename);
-}
-
-/* ---------- API Calls ---------- */
-async function merge(){
-  const inp = document.getElementById('mergeFiles');
-  const fd = new FormData();
-  if(!inp.files?.length || inp.files.length < 2){ alert('Bitte mindestens 2 PDFs wählen.'); return; }
-  [...inp.files].forEach(f => fd.append('files', f));
-  const res = await fetch('/api/merge', { method:'POST', body: fd });
-  await downloadFromResponse(res, 'merged.pdf');
-}
-
-async function split(){
-  const file = document.getElementById('splitFile').files[0];
-  const ranges = document.getElementById('splitRanges').value.trim();
-  if(!file){ alert('Bitte ein PDF wählen.'); return; }
-  if(!ranges){ alert('Bitte Bereiche angeben, z. B. 1-3,5,end'); return; }
-  const fd = new FormData();
-  fd.append('file', file);
-  const res = await fetch(`/api/split?ranges=${encodeURIComponent(ranges)}`, { method:'POST', body: fd });
-  await downloadFromResponse(res, 'parts.zip');
-}
-
-async function rotate(){
-  const file = document.getElementById('rotFile').files[0];
-  const pages = document.getElementById('rotPages').value.trim();
-  const angle = document.getElementById('rotAngle').value;
-  if(!file){ alert('Bitte ein PDF wählen.'); return; }
-  if(!pages){ alert('Bitte Seiten angeben, z. B. 2,4-5'); return; }
-  const fd = new FormData();
-  fd.append('file', file);
-  const res = await fetch(`/api/rotate?pages=${encodeURIComponent(pages)}&angle=${angle}`, { method:'POST', body: fd });
-  await downloadFromResponse(res, 'rotated.pdf');
-}
-
-async function compress(){
-  const file = document.getElementById('cmpFile').files[0];
-  const level = document.getElementById('cmpLevel').value;
-  if(!file){ alert('Bitte ein PDF wählen.'); return; }
-  const fd = new FormData();
-  fd.append('file', file);
-  const res = await fetch(`/api/compress?level=${level}`, { method:'POST', body: fd });
-  await downloadFromResponse(res, 'compressed.pdf');
-}
-</script>
+  </script>
 </body>
 </html>

@@ -1,7 +1,11 @@
 using System.IO.Compression;
 using Microsoft.AspNetCore.Http;
-using PdfSharpCore.Pdf;
 using PdfSharpCore.Pdf.IO;
+using PdfSharpCore.Drawing;
+using UglyToad.PdfPig.Content;
+
+// Alias, damit kein Konflikt mit UglyToad.PdfPig.PdfDocument entsteht:
+using SharpPdfDocument = PdfSharpCore.Pdf.PdfDocument;
 
 namespace PdfHelper.Api.Services;
 
@@ -20,7 +24,7 @@ public class PdfService : IPdfService
         var inputs = await SaveUploads(files);
         var outPath = TempPath("merged", ".pdf");
 
-        using var output = new PdfDocument();
+        using var output = new SharpPdfDocument();
         foreach (var inPath in inputs)
         {
             using var input = PdfReader.Open(inPath, PdfDocumentOpenMode.Import);
@@ -42,7 +46,7 @@ public class PdfService : IPdfService
         int idx = 1;
         foreach (var (start, end) in parsed)
         {
-            using var part = new PdfDocument();
+            using var part = new SharpPdfDocument();
             for (int p = start; p <= end; p++)
                 part.AddPage(doc.Pages[p - 1]);
             var partPath = Path.Combine(partsDir, $"part_{idx++}_{start}-{end}.pdf");
@@ -60,7 +64,7 @@ public class PdfService : IPdfService
         var outPath = TempPath("rotated", ".pdf");
 
         using var input = PdfReader.Open(inPath, PdfDocumentOpenMode.Import);
-        using var output = new PdfDocument();
+        using var output = new SharpPdfDocument();
 
         var targetPages = ParsePageList(pages, input.PageCount); // 1-basiert
 
@@ -128,7 +132,82 @@ public class PdfService : IPdfService
         }
     }
 
-    // ---------- Helpers ----------
+    // ========== NEU: Textbearbeitung ==========
+
+    public async Task<string> ReplaceTextAsync(IFormFile file, string find, string replace, TextReplaceOptions? options)
+    {
+        if (string.IsNullOrWhiteSpace(find)) throw new ArgumentException("Suchtext darf nicht leer sein.");
+        options ??= new TextReplaceOptions();
+
+        var inPath = await SaveUpload(file);
+        var outPath = TempPath("replace", ".pdf");
+
+        var matches = FindTextOccurrences(inPath, find, options);
+
+        using var input = PdfReader.Open(inPath, PdfDocumentOpenMode.Import);
+        using var output = new SharpPdfDocument();
+
+        for (int i = 0; i < input.PageCount; i++)
+        {
+            var src = input.Pages[i];
+            var dst = output.AddPage(src);
+            using var gfx = XGraphics.FromPdfPage(dst);
+
+            var font = new XFont(options.FontFamily ?? "Arial", options.FontSize, XFontStyle.Regular);
+
+            if (matches.TryGetValue(i + 1, out var rects))
+            {
+                foreach (var r in rects)
+                {
+                    var pad = options.Padding;
+                    var rect = new XRect(r.X - pad, dst.Height - (r.Y + r.Height) - pad, r.Width + 2 * pad, r.Height + 2 * pad);
+                    gfx.DrawRectangle(XBrushes.White, rect);
+
+                    var textPoint = new XPoint(r.X, dst.Height - r.Y - (r.Height * 0.2));
+                    gfx.DrawString(replace, font, XBrushes.Black, textPoint);
+                }
+            }
+        }
+
+        output.Save(outPath);
+        return outPath;
+    }
+
+    public async Task<string> RedactTextAsync(IFormFile file, string find, TextReplaceOptions? options)
+    {
+        if (string.IsNullOrWhiteSpace(find)) throw new ArgumentException("Suchtext darf nicht leer sein.");
+        options ??= new TextReplaceOptions();
+
+        var inPath = await SaveUpload(file);
+        var outPath = TempPath("redact", ".pdf");
+
+        var matches = FindTextOccurrences(inPath, find, options);
+
+        using var input = PdfReader.Open(inPath, PdfDocumentOpenMode.Import);
+        using var output = new SharpPdfDocument();
+
+        for (int i = 0; i < input.PageCount; i++)
+        {
+            var src = input.Pages[i];
+            var dst = output.AddPage(src);
+            using var gfx = XGraphics.FromPdfPage(dst);
+
+            if (matches.TryGetValue(i + 1, out var rects))
+            {
+                foreach (var r in rects)
+                {
+                    var pad = options.Padding;
+                    var rect = new XRect(r.X - pad, dst.Height - (r.Y + r.Height) - pad, r.Width + 2 * pad, r.Height + 2 * pad);
+                    gfx.DrawRectangle(XBrushes.Black, rect);
+                }
+            }
+        }
+
+        output.Save(outPath);
+        return outPath;
+    }
+
+    // ========== Helpers ==========
 
     private async Task<string[]> SaveUploads(IFormFileCollection files)
     {
@@ -210,5 +289,50 @@ public class PdfService : IPdfService
         foreach (var (s, e) in ParseRanges(pages, pageCount))
             for (int i = s; i <= e; i++) set.Add(i);
         return set;
+    }
+
+    // ---------- Helper für Textsuche (PdfPig) ----------
+
+    private record RectD(double X, double Y, double Width, double Height);
+
+    private Dictionary<int, List<RectD>> FindTextOccurrences(string pdfPath, string term, TextReplaceOptions options)
+    {
+        var results = new Dictionary<int, List<RectD>>();
+
+        // Vollqualifiziert, um Konflikte zu vermeiden:
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdfPath);
+
+        for (int pageNum = 1; pageNum <= doc.NumberOfPages; pageNum++)
+        {
+            var page = doc.GetPage(pageNum);
+
+            // Direkt aus PdfPig (kein DefaultWordExtractor nötig):
+            var words = page.GetWords(); // IEnumerable<Word>
+
+            if (words is null) continue;
+
+            var termCmp = options.MatchCase ? term : term.ToLowerInvariant();
+
+            foreach (var w in words)
+            {
+                var text = w.Text;
+                var cmp = options.MatchCase ? text : text.ToLowerInvariant();
+
+                bool isMatch = options.WholeWord ? (cmp == termCmp) : cmp.Contains(termCmp);
+                if (!isMatch) continue;
+
+                var b = w.BoundingBox; // (Left, Bottom, Width, Height)
+                var rect = new RectD(b.Left, b.Bottom, b.Width, b.Height);
+
+                if (!results.TryGetValue(pageNum, out var list))
+                {
+                    list = new List<RectD>();
+                    results[pageNum] = list;
+                }
+                list.Add(rect);
+            }
+        }
+
+        return results;
     }
 }

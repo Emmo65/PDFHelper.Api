@@ -147,3 +147,37 @@ html[data-theme="light"] .dropzone{
   box-shadow: var(--shadow);
 }
 .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px) }
+/* ===== Overrides (ans Ende der style.css einfügen) ===== */
+
+/* 2 Spalten ab Desktop */
+@media (min-width: 980px){
+  .grid{
+    grid-template-columns: 1fr 1fr !important;
+    gap: 22px !important;
+  }
+}
+
+/* Etwas mehr Breite für den Inhalt */
+.wrap{
+  width: min(1200px, 100%) !important;
+}
+
+/* Einheitliche Höhen/Abstände für Inputs & Buttons */
+.input{ height: 40px; line-height: 38px; }
+.btn{ height: 40px; }
+
+/* Dropzones konsistent darstellen */
+.dropzone{
+  min-height: 140px !important;
+  padding: 14px !important;
+}
+.dropzone span{
+  font-size: 15px;
+}
+
+/* Karten leicht luftiger */
+.card{ padding: 24px !important; }
+.card h2{ margin-bottom: 16px !important; }
+
+/* Reihen ausrichten */
+.row{ align-items: center !important; gap: 12px !important; }
